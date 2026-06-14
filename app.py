@@ -170,10 +170,18 @@ for color_name, hex_code in user_palette.items():
         f"\\textcolor{{{hex_code}}}"
     )
 
-# Use an HTML div to inject the background color and base text color directly into the web preview
+# Inject the base text color directly into the KaTeX engine at the start of the string
+preview_equation = f"\\color{{{user_base_text}}} {preview_equation}"
+
+# CRITICAL FIX: Notice the empty lines before and after the $$ block. 
+# This forces Streamlit to switch from HTML mode back into Math mode.
 st.markdown(f"""
-<div style="background-color: {user_bg_color}; color: {user_base_text}; padding: 30px; border-radius: 8px; text-align: center; overflow-x: auto; font-size: 1.5em;">
-    $$ {preview_equation} $$
+<div style="background-color: {user_bg_color}; padding: 30px; border-radius: 8px; text-align: center; overflow-x: auto; font-size: 1.5em;">
+
+$$
+{preview_equation}
+$$
+
 </div>
 """, unsafe_allow_html=True)
 
