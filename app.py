@@ -78,12 +78,42 @@ font_options = {
 selected_font_label = st.sidebar.selectbox("Font Type", list(font_options.keys()))
 user_font_package = font_options[selected_font_label]
 
-# Main Area: Equation Input
-default_eq = r"\textcolor{colorA}{\bm{x}_{n+1}} = \underset{\bm{x}}{\operatorname{argmax}}\,\textcolor{colorC}{\alpha} + \textcolor{colorB}{\sum_{i=1}^n \beta_i}"
+# --- Quick Insert Panel ---
+st.subheader("🧰 Quick Insert Panel")
+st.caption("Click to append common LaTeX structures to the end of your equation.")
 
+# Define your snippet dictionary
+snippets = {
+    "Fraction": r"\frac{numerator}{denominator}",
+    "Integral": r"\int_{a}^{b} x \,dx",
+    "Summation": r"\sum_{i=1}^{n} i",
+    "2x2 Matrix": r"\begin{pmatrix} a & b \\ c & d \end{pmatrix}",
+    "Square Root": r"\sqrt{x^2 + y^2}",
+    "Limit": r"\lim_{x \to \infty}",
+    "Color Block": r"\textcolor{colorA}{text}"
+}
+
+# Callback function to update the text area
+def add_snippet(snippet):
+    # This appends the snippet to whatever is currently in the text box
+    st.session_state.equation_text += f" {snippet} "
+
+# Initialize the text box state if it doesn't exist yet
+if "equation_text" not in st.session_state:
+    st.session_state.equation_text = r"\textcolor{colorA}{\bm{x}_{n+1}} = \underset{\bm{x}}{\operatorname{argmax}}\,\textcolor{colorC}{\alpha} + \textcolor{colorB}{\sum_{i=1}^n \beta_i}"
+
+# Create a row of columns for the buttons so they sit cleanly in a grid
+cols = st.columns(len(snippets))
+for i, (label, snippet) in enumerate(snippets.items()):
+    with cols[i]:
+        # Connect the button to the callback function
+        st.button(label, on_click=add_snippet, args=(snippet,), key=f"btn_{label}")
+
+# --- Main Area: Equation Input ---
+# By assigning key="equation_text", Streamlit links this box to our session state
 user_equation = st.text_area(
     "LaTeX Equation Editor", 
-    value=default_eq,
+    key="equation_text",
     height=150
 )
 
@@ -98,7 +128,7 @@ with st.expander("💡 Quick Syntax Guide for Colors"):
     * Use `\\textcolor{colorB}{your math here}` for <span style="color:green">Color 2</span>
     * Use `\\textcolor{colorC}{your math here}` for <span style="color:orange">Color 3</span>
     """, unsafe_allow_html=True)
-    
+
 # Export & Download
 if st.button("Render PDF", type="primary"):
     with st.spinner("Compiling LaTeX engine..."):
