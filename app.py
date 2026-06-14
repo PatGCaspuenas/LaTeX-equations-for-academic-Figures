@@ -97,8 +97,8 @@ with st.expander("💡 Quick Syntax Guide for Colors"):
     * Use `\\textcolor{colorA}{your math here}` for <span style="color:blue">Color 1</span>
     * Use `\\textcolor{colorB}{your math here}` for <span style="color:green">Color 2</span>
     * Use `\\textcolor{colorC}{your math here}` for <span style="color:orange">Color 3</span>
-    """, unsafe_allowed_html=True)
-
+    """, unsafe_allow_html=True)
+    
 # Export & Download
 if st.button("Render PDF", type="primary"):
     with st.spinner("Compiling LaTeX engine..."):
