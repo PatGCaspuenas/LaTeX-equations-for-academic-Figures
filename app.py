@@ -145,7 +145,17 @@ user_equation = st.text_area("LaTeX Editor", key="equation_text", height=150)
 
 # Live Preview
 st.subheader("Live Preview")
-st.latex(user_equation)
+
+# Intercept the text and swap custom names for literal hex codes just for KaTeX
+preview_equation = user_equation
+for color_name, hex_code in user_palette.items():
+    # Example: Replaces \textcolor{colorA} with \textcolor{#DE4968}
+    preview_equation = preview_equation.replace(
+        f"\\textcolor{{{color_name}}}", 
+        f"\\textcolor{{{hex_code}}}"
+    )
+
+st.latex(preview_equation)
 
 # Export & Download
 if st.button("Render PDF", type="primary"):
