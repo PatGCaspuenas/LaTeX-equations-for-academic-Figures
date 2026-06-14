@@ -5,19 +5,30 @@ import shutil
 import os
 
 def generate_latex_pdf(equation: str, output_filepath: str,
-                       palette: dict, fontsize: float = 8.0, font_package: str = "lmodern"):
+                       palette: dict, bg_color: str, base_text_color: str,
+                       fontsize: float = 8.0, font_package: str = "lmodern"):
+    
     color_defs = ""
+    # Define the dynamic custom palette
     for name, hex_val in palette.items():
         clean_hex = hex_val.lstrip("#")
         color_defs += f"\\definecolor{{{name}}}{{HTML}}{{{clean_hex}}}\n"
 
-    tex_template = f"""\\documentclass[10pt, border=1pt]{{standalone}}
+    # Define background and base text colors
+    bg_hex = bg_color.lstrip("#")
+    text_hex = base_text_color.lstrip("#")
+    color_defs += f"\\definecolor{{pagebg}}{{HTML}}{{{bg_hex}}}\n"
+    color_defs += f"\\definecolor{{maintext}}{{HTML}}{{{text_hex}}}\n"
+
+    tex_template = f"""\\documentclass[10pt, border=5pt]{{standalone}}
 \\usepackage{{{font_package}}}
 \\usepackage{{amsmath, amssymb, amsfonts}}
 \\usepackage{{bm}}
 \\usepackage{{xcolor}}
 {color_defs}
 \\begin{{document}}
+\\pagecolor{{pagebg}}
+\\color{{maintext}}
 \\fontsize{{{fontsize}pt}}{{{fontsize * 1.2:.2f}pt}}\\selectfont
 $\\displaystyle {equation} $
 \\end{{document}}
@@ -50,11 +61,17 @@ st.set_page_config(layout="wide")
 st.title("Advanced LaTeX to PDF Editor")
 
 # Sidebar
-st.sidebar.header("🎨 Color Palette")
+st.sidebar.header("🎨 Colors & Canvas")
+# Added Background and Base Text configuration
+user_bg_color = st.sidebar.color_picker("Background Canvas", "#1A1A1A")
+user_base_text = st.sidebar.color_picker("Base Text Color", "#FFFFFF")
+
+st.sidebar.divider()
+st.sidebar.write("**Custom Highlight Palette**")
 c1 = st.sidebar.color_picker("Color 1 (`colorA`)", "#DE4968")
 c2 = st.sidebar.color_picker("Color 2 (`colorB`)", "#F8CD6C")
 c3 = st.sidebar.color_picker("Color 3 (`colorC`)", "#F1A376")
-c4 = st.sidebar.color_picker("Color 4 (`colorD`)", "#FFFFFF")
+c4 = st.sidebar.color_picker("Color 4 (`colorD`)", "#4D89F8")
 user_palette = {"colorA": c1, "colorB": c2, "colorC": c3, "colorD": c4}
 
 st.sidebar.header("⚙️ Typography")
@@ -120,7 +137,6 @@ tabs = st.tabs(list(snippet_categories.keys()))
 
 for i, (category_name, snippets) in enumerate(snippet_categories.items()):
     with tabs[i]:
-        # Create a grid layout (8 columns per row so buttons aren't too wide)
         cols_per_row = 8
         items = list(snippets.items())
         
@@ -146,22 +162,34 @@ user_equation = st.text_area("LaTeX Editor", key="equation_text", height=150)
 # Live Preview
 st.subheader("Live Preview")
 
-# Intercept the text and swap custom names for literal hex codes just for KaTeX
+# Intercept the text and swap custom names for literal hex codes for the KaTeX web preview
 preview_equation = user_equation
 for color_name, hex_code in user_palette.items():
-    # Example: Replaces \textcolor{colorA} with \textcolor{#DE4968}
     preview_equation = preview_equation.replace(
         f"\\textcolor{{{color_name}}}", 
         f"\\textcolor{{{hex_code}}}"
     )
 
-st.latex(preview_equation)
+# Use an HTML div to inject the background color and base text color directly into the web preview
+st.markdown(f"""
+<div style="background-color: {user_bg_color}; color: {user_base_text}; padding: 30px; border-radius: 8px; text-align: center; overflow-x: auto; font-size: 1.5em;">
+    $$ {preview_equation} $$
+</div>
+""", unsafe_allow_html=True)
 
 # Export & Download
 if st.button("Render PDF", type="primary"):
     with st.spinner("Compiling LaTeX engine..."):
         temp_out = os.path.join(tempfile.gettempdir(), "final_equation.pdf")
-        success = generate_latex_pdf(user_equation, temp_out, user_palette, user_fontsize, user_font_package)
+        success = generate_latex_pdf(
+            equation=user_equation, 
+            output_filepath=temp_out, 
+            palette=user_palette, 
+            bg_color=user_bg_color,
+            base_text_color=user_base_text,
+            fontsize=user_fontsize, 
+            font_package=user_font_package
+        )
 
         if success:
             st.success("PDF generated successfully!")
