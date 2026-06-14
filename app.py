@@ -3,6 +3,8 @@ import subprocess
 import tempfile
 import shutil
 import os
+import base64
+from st_clickable_images import clickable_images
 
 def generate_latex_pdf(equation: str, output_filepath: str,
                        palette: dict, bg_color: str, base_text_color: str,
@@ -82,50 +84,61 @@ user_font_package = font_options[st.sidebar.selectbox("Font Type", list(font_opt
 # --- Quick Insert Panel ---
 st.subheader("🧰 Symbol & Structure Toolbar")
 
-snippet_categories = {
-    "Calculus & Structures": {
-        "a/b": r"\frac{a}{b}", "xᵃ": r"x^{a}", "xₐ": r"x_{a}", "√x": r"\sqrt{x}", "ⁿ√x": r"\sqrt[n]{x}",
-        "∫": r"\int", "∫ₐᵇ": r"\int_{a}^{b}", "∬": r"\iint", "∮": r"\oint",
-        "∑": r"\sum_{i=1}^{n}", "∏": r"\prod_{i=1}^{n}", "lim": r"\lim_{x \to \infty}",
-        "∂": r"\partial", "∂f/∂x": r"\frac{\partial f}{\partial x}", "d/dx": r"\frac{\mathrm{d}}{\mathrm{d}x}"
-    },
-    "Greek Letters": {
-        "α": r"\alpha", "β": r"\beta", "γ": r"\gamma", "δ": r"\delta", "ε": r"\epsilon", "ζ": r"\zeta",
-        "η": r"\eta", "θ": r"\theta", "ι": r"\iota", "κ": r"\kappa", "λ": r"\lambda", "μ": r"\mu",
-        "ν": r"\nu", "ξ": r"\xi", "π": r"\pi", "ρ": r"\rho", "σ": r"\sigma", "τ": r"\tau", "υ": r"\upsilon",
-        "ϕ": r"\phi", "χ": r"\chi", "ψ": r"\psi", "ω": r"\omega", 
-        "Γ": r"\Gamma", "Δ": r"\Delta", "Θ": r"\Theta", "Λ": r"\Lambda", "Π": r"\Pi", "Σ": r"\Sigma", "Ω": r"\Omega",
-        "ϑ": r"\vartheta", "φ": r"\varphi", "ϖ": r"\varpi", "ϱ": r"\varrho", "ς": r"\varsigma"
-    },
-    "Operators & Relations": {
-        "±": r"\pm", "∓": r"\mp", "×": r"\times", "÷": r"\div", "·": r"\cdot", "∘": r"\circ",
-        "≈": r"\approx", "≠": r"\neq", "≡": r"\equiv", "≤": r"\leq", "≥": r"\geq", "∝": r"\propto",
-        "∼": r"\sim", "≃": r"\simeq", "≅": r"\cong", "≪": r"\ll", "≫": r"\gg", "≐": r"\doteq",
-        "≺": r"\prec", "≻": r"\succ", "⊧": r"\models", "⊢": r"\vdash", "⊣": r"\dashv", "⋈": r"\bowtie"
-    },
-    "Logic & Sets": {
-        "∩": r"\cap", "∪": r"\cup", "∈": r"\in", "∉": r"\notin", "⊂": r"\subset", "⊆": r"\subseteq",
-        "∀": r"\forall", "∃": r"\exists", "∄": r"\nexists", "∞": r"\infty", "∅": r"\emptyset",
-        "ℝ": r"\mathbb{R}", "ℂ": r"\mathbb{C}", "ℕ": r"\mathbb{N}", "ℤ": r"\mathbb{Z}", "ℚ": r"\mathbb{Q}",
-        "ℙ": r"\mathbb{P}", "𝔼": r"\mathbb{E}"
-    },
-    "Matrices & Layouts": {
-        "(n r)": r"\binom{n}{r}", "…": r"\dots", "⋯": r"\cdots", "⋮": r"\vdots", "⋱": r"\ddots",
-        "[ ] Mat": r"\begin{bmatrix} a & b \\ c & d \end{bmatrix}",
-        "( ) Mat": r"\begin{pmatrix} a & b \\ c & d \end{pmatrix}",
-        "| | Mat": r"\begin{vmatrix} a & b \\ c & d \end{vmatrix}",
-        "‖ ‖ Mat": r"\begin{Vmatrix} a & b \\ c & d \end{Vmatrix}",
-        "Cases": r"\begin{cases} x & \text{if } x > 0 \\ 0 & \text{otherwise} \end{cases}",
-        "Aligned": r"\begin{aligned} y &= mx + b \\ &= 2x + 1 \end{aligned}"
-    },
-    "Arrows & Fonts": {
-        "→": r"\rightarrow", "←": r"\leftarrow", "↔": r"\leftrightarrow", "⇒": r"\Rightarrow", "⇔": r"\Leftrightarrow",
-        "↦": r"\mapsto", "↑": r"\uparrow", "↓": r"\downarrow",
-        "Bold Text": r"\mathbf{text}", "Italic": r"\mathit{text}", "Callig": r"\mathcal{A}", "Fraktur": r"\mathfrak{R}",
-        "Bold Math": r"\bm{x}", "Color Block": r"\textcolor{colorA}{text}",
-        "â": r"\hat{a}", "ã": r"\tilde{a}", "ā": r"\bar{a}", "a⃗": r"\vec{a}"
-    }
-}
+# Helper function to load local SVGs safely
+def load_svg(filepath):
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            svg_content = f.read()
+        # Convert SVG to base64 so Streamlit can render it securely inside HTML
+        b64 = base64.b64encode(svg_content.encode("utf-8")).decode("utf-8")
+        return f"data:image/svg+xml;base64,{b64}"
+    except FileNotFoundError:
+        return "" # Returns empty if the SVG hasn't been generated yet
+
+# We will loop through the categories just like before
+tabs = st.tabs(list(snippet_categories.keys()))
+
+for i, (category_name, snippets) in enumerate(snippet_categories.items()):
+    with tabs[i]:
+        
+        # Prepare lists for the clickable_images component
+        svg_images = []
+        titles = []
+        raw_snippets = []
+        
+        for label, snippet in snippets.items():
+            safe_name = f"{category_name}_{label}".replace(" ", "_").replace("/", "over")
+            svg_path = os.path.join("svg_icons", f"{safe_name}.svg")
+            
+            svg_data = load_svg(svg_path)
+            if svg_data:
+                svg_images.append(svg_data)
+                titles.append(label)
+                raw_snippets.append(snippet)
+        
+        if svg_images:
+            # Render the grid of clickable SVGs
+            clicked = clickable_images(
+                svg_images,
+                titles=titles,
+                div_style={"display": "flex", "flex-wrap": "wrap", "gap": "10px"},
+                img_style={
+                    "cursor": "pointer", 
+                    "padding": "10px", 
+                    "border-radius": "5px", 
+                    "background-color": "#2D2D2D", # Box behind the SVG
+                    "height": "50px"
+                },
+                key=f"grid_{category_name}"
+            )
+            
+            # The component returns the index of the clicked image (or -1 if none clicked)
+            if clicked > -1:
+                # Append the corresponding LaTeX snippet to the session state
+                st.session_state.equation_text += f" {raw_snippets[clicked]} "
+                # Force a rerun so the text area updates immediately
+                st.rerun()
+
 
 def add_snippet(snippet):
     st.session_state.equation_text += f" {snippet} "
