@@ -126,7 +126,7 @@ if "equation_text" not in st.session_state:
     st.session_state.equation_text = r"\textcolor{colorA}{\bm{x}_{n+1}} = \underset{\bm{x}}{\operatorname{argmax}}\,\textcolor{colorC}{\alpha} + \textcolor{colorB}{\sum_{i=1}^n \beta_i}"
 
 # --- Quick Insert Panel ---
-st.subheader("🧰 Symbol & Structure Toolbar")
+st.subheader("Symbol & Structure Toolbar") # Removed the emoji
 
 def load_svg(filepath):
     try:
@@ -170,12 +170,20 @@ for i, (category_name, snippets) in enumerate(snippet_categories.items()):
                 key=f"grid_{category_name}"
             )
             
-            if clicked > -1:
+            # --- THE CLICK FIX ---
+            # Track the last clicked index to prevent infinite loops and freezing
+            click_key = f"last_click_{category_name}"
+            if click_key not in st.session_state:
+                st.session_state[click_key] = -1
+
+            # Only append text if an image was actually clicked AND it's a new click
+            if clicked > -1 and clicked != st.session_state[click_key]:
                 st.session_state.equation_text += f" {raw_snippets[clicked]} "
-                st.rerun()
+                st.session_state[click_key] = clicked
+                # Removed the st.rerun() command so the text area updates smoothly
 
 # --- Main Area: Equation Input ---
-st.write("---")
+# Removed st.write("---") to tighten the gap between buttons and the text box
 user_equation = st.text_area("LaTeX Editor", key="equation_text", height=150)
 
 # Live Preview

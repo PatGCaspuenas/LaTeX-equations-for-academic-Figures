@@ -53,6 +53,8 @@ os.makedirs(output_dir, exist_ok=True)
 tex_template = r"""\documentclass[12pt, border=2pt]{standalone}
 \usepackage{amsmath, amssymb, amsfonts, bm}
 \usepackage{xcolor}
+% Add this line so the generator knows how to color the SVG icon
+\definecolor{colorA}{HTML}{DE4968} 
 \begin{document}
 \color{white} 
 $\displaystyle REPLACE_ME $
