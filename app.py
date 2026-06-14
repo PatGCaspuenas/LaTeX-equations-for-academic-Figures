@@ -5,30 +5,24 @@ import shutil
 import os
 
 def generate_latex_pdf(equation: str, output_filepath: str,
-                       color: str = "black", fontsize: float = 8.0, font_package: str = "lmodern"):
+                       palette: dict, fontsize: float = 8.0, font_package: str = "lmodern"):
     """
-    Generates a cropped PDF from a LaTeX equation.
+    Generates a cropped PDF from a LaTeX equation with support for a multi-color palette.
     """
-    color_def = ""
-    color_cmd = f"\\color{{{color}}}"
-    if color.startswith("#"):
-        hex_val = color.lstrip("#")
-        color_def = f"\\definecolor{{mycolor}}{{HTML}}{{{hex_val}}}"
-        color_cmd = "\\color{mycolor}"
+    # Build custom color definitions from our palette dict
+    color_defs = ""
+    for name, hex_val in palette.items():
+        clean_hex = hex_val.lstrip("#")
+        color_defs += f"\\definecolor{{{name}}}{{HTML}}{{{clean_hex}}}\n"
 
     tex_template = f"""\\documentclass[10pt, border=1pt]{{standalone}}
 \\usepackage{{{font_package}}}
 \\usepackage{{amsmath, amssymb}}
 \\usepackage{{bm}}
 \\usepackage{{xcolor}}
-\\definecolor{{gpred}}{{HTML}}{{DE4968}}
-\\definecolor{{gpyellow}}{{HTML}}{{F8CD6C}}
-\\definecolor{{gporange}}{{HTML}}{{F1A376}}
-{color_def}
-
+{color_defs}
 \\begin{{document}}
 \\fontsize{{{fontsize}pt}}{{{fontsize * 1.2:.2f}pt}}\\selectfont
-{color_cmd}
 $\\displaystyle {equation} $
 \\end{{document}}
 """
@@ -59,58 +53,73 @@ $\\displaystyle {equation} $
         return False
 
 # --- Web App UI ---
+st.set_page_config(layout="wide")
+st.title("Multi-Color LaTeX to PDF Generator")
 
-st.title("LaTeX to PDF Generator")
+# Sidebar: Global Configurations & Palette
+st.sidebar.header("🎨 Color Palette Setup")
+st.sidebar.write("Pick your custom colors here, then use them in your equation via the tags below.")
 
-# 1. Inputs
-col1, col2, col3 = st.columns(3)
-with col1:
-    user_color = st.color_picker("Pick a Text Color", "#DE4968")
-with col2:
-    user_fontsize = st.slider("Font Size (pt)", min_value=4.0, max_value=48.0, value=12.0, step=0.5)
-with col3:
-    font_options = {
-        "Computer Modern (Default)": "lmodern",
-        "Times / MathPTMX": "mathptmx",
-        "Palatino": "mathpazo"
-    }
-    selected_font_label = st.selectbox("Font Type", list(font_options.keys()))
-    user_font_package = font_options[selected_font_label]
+c1 = st.sidebar.color_picker("Color 1 (`colorA`)", "#DE4968")
+c2 = st.sidebar.color_picker("Color 2 (`colorB`)", "#F8CD6C")
+c3 = st.sidebar.color_picker("Color 3 (`colorC`)", "#F1A376")
+c4 = st.sidebar.color_picker("Color 4 (`colorD`)", "#FFFFFF") # Default white/text color
+
+user_palette = {"colorA": c1, "colorB": c2, "colorC": c3, "colorD": c4}
+
+st.sidebar.header("⚙️ Typography Settings")
+user_fontsize = st.sidebar.slider("Font Size (pt)", min_value=4.0, max_value=48.0, value=12.0, step=0.5)
+
+font_options = {
+    "Computer Modern (Default)": "lmodern",
+    "Times / MathPTMX": "mathptmx",
+    "Palatino": "mathpazo"
+}
+selected_font_label = st.sidebar.selectbox("Font Type", list(font_options.keys()))
+user_font_package = font_options[selected_font_label]
+
+# Main Area: Equation Input
+default_eq = r"\textcolor{colorA}{\bm{x}_{n+1}} = \underset{\bm{x}}{\operatorname{argmax}}\,\textcolor{colorC}{\alpha} + \textcolor{colorB}{\sum_{i=1}^n \beta_i}"
 
 user_equation = st.text_area(
-    "LaTeX Equation (without $ signs)", 
-    r"\bm{x}_{n+1} = \underset{\bm{x}}{\operatorname{argmax}}\,\alpha"
+    "LaTeX Equation Editor", 
+    value=default_eq,
+    height=150
 )
 
-# 2. Live Preview
+# Live Preview
 st.subheader("Live Web Preview")
 st.latex(user_equation)
-st.caption("Note: Preview uses standard web fonts. PDF export will use your selected LaTeX font and color.")
 
-# 3. Export & Download
-if st.button("Render PDF"):
-    with st.spinner("Compiling LaTeX..."):
-        # We save to a temporary file first
+with st.expander("💡 Quick Syntax Guide for Colors"):
+    st.markdown("""
+    To color an individual term, wrap it in a `\\textcolor{colorName}{...}` block:
+    * Use `\\textcolor{colorA}{your math here}` for <span style="color:blue">Color 1</span>
+    * Use `\\textcolor{colorB}{your math here}` for <span style="color:green">Color 2</span>
+    * Use `\\textcolor{colorC}{your math here}` for <span style="color:orange">Color 3</span>
+    """, unsafe_allowed_html=True)
+
+# Export & Download
+if st.button("Render PDF", type="primary"):
+    with st.spinner("Compiling LaTeX engine..."):
         temp_out = os.path.join(tempfile.gettempdir(), "final_equation.pdf")
         
         success = generate_latex_pdf(
             equation=user_equation, 
             output_filepath=temp_out, 
-            color=user_color, 
+            palette=user_palette, 
             fontsize=user_fontsize,
             font_package=user_font_package
         )
 
         if success:
             st.success("PDF generated successfully!")
-            
-            # Read the PDF into memory so Streamlit can trigger the browser download
             with open(temp_out, "rb") as pdf_file:
                 pdf_bytes = pdf_file.read()
             
             st.download_button(
-                label="📥 Save PDF to Downloads",
+                label="📥 Save Multi-Color PDF to Downloads",
                 data=pdf_bytes,
-                file_name="equation.pdf",
+                file_name="multicolor_equation.pdf",
                 mime="application/pdf"
             )
