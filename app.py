@@ -59,65 +59,106 @@ st.title("Advanced LaTeX to PDF Editor")
 
 # Sidebar
 st.sidebar.header("🎨 Colors & Canvas")
-user_bg_color = st.sidebar.color_picker("Background Canvas", "#1A1A1A")
-user_base_text = st.sidebar.color_picker("Base Text Color", "#FFFFFF")
 
-st.sidebar.divider()
-st.sidebar.write("**Custom Highlight Palette**")
-c1 = st.sidebar.color_picker("Color 1 (`colorA`)", "#DE4968")
-c2 = st.sidebar.color_picker("Color 2 (`colorB`)", "#F8CD6C")
-c3 = st.sidebar.color_picker("Color 3 (`colorC`)", "#F1A376")
-c4 = st.sidebar.color_picker("Color 4 (`colorD`)", "#4D89F8")
+# Place canvas settings side-by-side
+col1, col2 = st.sidebar.columns(2)
+user_bg_color = col1.color_picker("Canvas", "#1A1A1A")
+user_base_text = col2.color_picker("Text", "#FFFFFF")
+
+st.sidebar.markdown("**Custom Highlight Palette**")
+
+# Place highlight colors in a 2x2 grid
+col3, col4 = st.sidebar.columns(2)
+c1 = col3.color_picker("`colorA`", "#DE4968")
+c2 = col4.color_picker("`colorB`", "#F8CD6C")
+
+col5, col6 = st.sidebar.columns(2)
+c3 = col5.color_picker("`colorC`", "#F1A376")
+c4 = col6.color_picker("`colorD`", "#4D89F8")
+
 user_palette = {"colorA": c1, "colorB": c2, "colorC": c3, "colorD": c4}
 
 st.sidebar.header("⚙️ Typography")
 user_fontsize = st.sidebar.slider("Font Size (pt)", 4.0, 48.0, 12.0, 0.5)
 font_options = {"Computer Modern": "lmodern", "Times": "mathptmx", "Palatino": "mathpazo"}
 user_font_package = font_options[st.sidebar.selectbox("Font Type", list(font_options.keys()))]
-
 # --- Dictionary Re-Added Here ---
 snippet_categories = {
     "Calculus & Structures": {
-        "a/b": r"\frac{a}{b}", "xᵃ": r"x^{a}", "xₐ": r"x_{a}", "√x": r"\sqrt{x}", "ⁿ√x": r"\sqrt[n]{x}",
+        "a/b": r"\frac{a}{b}", "xᵃ": r"x^{a}", "xₐ": r"x_{a}", "xₐᵇ": r"x_{a}^{b}",
+        "√x": r"\sqrt{x}", "ⁿ√x": r"\sqrt[n]{x}",
         "∫": r"\int", "∫ₐᵇ": r"\int_{a}^{b}", "∬": r"\iint", "∮": r"\oint",
-        "∑": r"\sum_{i=1}^{n}", "∏": r"\prod_{i=1}^{n}", "lim": r"\lim_{x \to \infty}",
-        "∂": r"\partial", "∂f/∂x": r"\frac{\partial f}{\partial x}", "d/dx": r"\frac{\mathrm{d}}{\mathrm{d}x}"
+        "∑": r"\sum", "∑ₐᵇ": r"\sum_{i=a}^{b}", "∏": r"\prod", "∏ₐᵇ": r"\prod_{i=a}^{b}",
+        "⋂": r"\bigcap", "⋃": r"\bigcup", "lim": r"\lim_{x \to \infty}",
+        "∂": r"\partial", "∂f/∂x": r"\frac{\partial f}{\partial x}", "∂²f/∂x²": r"\frac{\partial^2 f}{\partial x^2}", "d/dx": r"\frac{\mathrm{d}}{\mathrm{d}x}"
     },
-    "Greek Letters": {
-        "α": r"\alpha", "β": r"\beta", "γ": r"\gamma", "δ": r"\delta", "ε": r"\epsilon", "ζ": r"\zeta",
-        "η": r"\eta", "θ": r"\theta", "ι": r"\iota", "κ": r"\kappa", "λ": r"\lambda", "μ": r"\mu",
-        "ν": r"\nu", "ξ": r"\xi", "π": r"\pi", "ρ": r"\rho", "σ": r"\sigma", "τ": r"\tau", "υ": r"\upsilon",
-        "ϕ": r"\phi", "χ": r"\chi", "ψ": r"\psi", "ω": r"\omega", 
-        "Γ": r"\Gamma", "Δ": r"\Delta", "Θ": r"\Theta", "Λ": r"\Lambda", "Π": r"\Pi", "Σ": r"\Sigma", "Ω": r"\Omega",
-        "ϑ": r"\vartheta", "φ": r"\varphi", "ϖ": r"\varpi", "ϱ": r"\varrho", "ς": r"\varsigma"
+    "Greek": {
+        "α": r"\alpha", "β": r"\beta", "γ": r"\gamma", "δ": r"\delta", "ϵ": r"\epsilon", "ε": r"\varepsilon",
+        "ζ": r"\zeta", "η": r"\eta", "θ": r"\theta", "ϑ": r"\vartheta", "ι": r"\iota", "κ": r"\kappa",
+        "λ": r"\lambda", "μ": r"\mu", "ν": r"\nu", "ξ": r"\xi", "π": r"\pi", "ϖ": r"\varpi",
+        "ρ": r"\rho", "ϱ": r"\varrho", "σ": r"\sigma", "ς": r"\varsigma", "τ": r"\tau", "υ": r"\upsilon",
+        "ϕ": r"\phi", "φ": r"\varphi", "χ": r"\chi", "ψ": r"\psi", "ω": r"\omega",
+        "Γ": r"\Gamma", "Δ": r"\Delta", "Θ": r"\Theta", "Λ": r"\Lambda", "Ξ": r"\Xi",
+        "Π": r"\Pi", "Σ": r"\Sigma", "Υ": r"\Upsilon", "Φ": r"\Phi", "Ψ": r"\Psi", "Ω": r"\Omega"
     },
-    "Operators & Relations": {
-        "±": r"\pm", "∓": r"\mp", "×": r"\times", "÷": r"\div", "·": r"\cdot", "∘": r"\circ",
-        "≈": r"\approx", "≠": r"\neq", "≡": r"\equiv", "≤": r"\leq", "≥": r"\geq", "∝": r"\propto",
-        "∼": r"\sim", "≃": r"\simeq", "≅": r"\cong", "≪": r"\ll", "≫": r"\gg", "≐": r"\doteq",
-        "≺": r"\prec", "≻": r"\succ", "⊧": r"\models", "⊢": r"\vdash", "⊣": r"\dashv", "⋈": r"\bowtie"
+    "Operators": {
+        "±": r"\pm", "∓": r"\mp", "×": r"\times", "÷": r"\div", "·": r"\cdot", "∘": r"\circ", "∗": r"\ast", "⋆": r"\star",
+        "∩": r"\cap", "∪": r"\cup", "⊎": r"\uplus", "⊓": r"\sqcap", "⊔": r"\sqcup",
+        "∧": r"\wedge", "∨": r"\vee", "◁": r"\triangleleft", "▷": r"\triangleright",
+        "⊕": r"\oplus", "⊖": r"\ominus", "⊗": r"\otimes", "⊘": r"\oslash", "⊙": r"\odot",
+        "†": r"\dagger", "‡": r"\ddagger", "≀": r"\wr", "∖": r"\setminus", "△": r"\bigtriangleup", "▽": r"\bigtriangledown"
     },
-    "Logic & Sets": {
-        "∩": r"\cap", "∪": r"\cup", "∈": r"\in", "∉": r"\notin", "⊂": r"\subset", "⊆": r"\subseteq",
+    "Relations": {
+        "=": r"=", "<": r"<", ">": r">", "≈": r"\approx", "≠": r"\neq", "≡": r"\equiv", "≤": r"\leq", "≥": r"\geq",
+        "∼": r"\sim", "≃": r"\simeq", "≅": r"\cong", "≪": r"\ll", "≫": r"\gg", "≐": r"\doteq", "∝": r"\propto",
+        "≺": r"\prec", "≻": r"\succ", "preceq": r"\preceq", "succeq": r"\succeq", "asymp": r"\asymp", "bowtie": r"\bowtie",
+        "⊢": r"\vdash", "⊣": r"\dashv", "⊧": r"\models", "⊥": r"\perp", "∥": r"\parallel", "∣": r"\mid",
+        "∈": r"\in", "∉": r"\notin", "∋": r"\ni",
+        "⊂": r"\subset", "⊃": r"\supset", "⊆": r"\subseteq", "⊇": r"\supseteq", 
+        "⊄": r"\not\subset", "⊅": r"\not\supset", "⊈": r"\not\subseteq", "⊉": r"\not\supseteq",
+        "⊏": r"\sqsubset", "⊐": r"\sqsupset", "⊑": r"\sqsubseteq", "⊒": r"\sqsupseteq"
+    },
+    "Sets & Logic": {
         "∀": r"\forall", "∃": r"\exists", "∄": r"\nexists", "∞": r"\infty", "∅": r"\emptyset",
-        "ℝ": r"\mathbb{R}", "ℂ": r"\mathbb{C}", "ℕ": r"\mathbb{N}", "ℤ": r"\mathbb{Z}", "ℚ": r"\mathbb{Q}",
-        "ℙ": r"\mathbb{P}", "𝔼": r"\mathbb{E}"
+        "ℝ": r"\mathbb{R}", "ℂ": r"\mathbb{C}", "ℕ": r"\mathbb{N}", "ℤ": r"\mathbb{Z}", "ℚ": r"\mathbb{Q}", "ℙ": r"\mathbb{P}", "𝕀": r"\mathbb{I}",
+        "ℜ": r"\Re", "ℑ": r"\Im", "℘": r"\wp", "ℓ": r"\ell", "∠": r"\angle", "∴": r"\therefore", "∵": r"\because",
+        "Bold": r"\mathbf{text}", "Italic": r"\mathit{text}", "Callig": r"\mathcal{A}", "Fraktur": r"\mathfrak{R}",
+        "Bold Math": r"\bm{x}", "Color": r"\textcolor{colorA}{text}"
     },
-    "Matrices & Layouts": {
-        "(n r)": r"\binom{n}{r}", "…": r"\dots", "⋯": r"\cdots", "⋮": r"\vdots", "⋱": r"\ddots",
+    "Arrows": {
+        "→": r"\rightarrow", "←": r"\leftarrow", "↔": r"\leftrightarrow", 
+        "⇒": r"\Rightarrow", "⇐": r"\Leftarrow", "⇔": r"\Leftrightarrow",
+        "⟶": r"\longrightarrow", "⟵": r"\longleftarrow", "⟷": r"\longleftrightarrow",
+        "↦": r"\mapsto", "⟼": r"\longmapsto",
+        "↑": r"\uparrow", "↓": r"\downarrow", "↕": r"\updownarrow",
+        "⇑": r"\Uparrow", "⇓": r"\Downarrow", "⇕": r"\Updownarrow",
+        "↗": r"\nearrow", "↘": r"\searrow", "↙": r"\swarrow", "↖": r"\nwarrow",
+        "⇀": r"\rightharpoonup", "⇁": r"\rightharpoondown", "↼": r"\leftharpoonup", "↽": r"\leftharpoondown",
+        "⇌": r"\rightleftharpoons", "x→": r"\xrightarrow{\text{text}}"
+    },
+    "Brackets & Matrices": {
+        "( )": r"\left( \dots \right)", "[ ]": r"\left[ \dots \right]", "{ }": r"\left\{ \dots \right\}",
+        "| |": r"\left| \dots \right|", "‖ ‖": r"\left\| \dots \right\|", "⟨ ⟩": r"\left\langle \dots \right\rangle",
+        "⌊ ⌋": r"\left\lfloor \dots \right\rfloor", "⌈ ⌉": r"\left\lceil \dots \right\rceil",
         "[ ] Mat": r"\begin{bmatrix} a & b \\ c & d \end{bmatrix}",
         "( ) Mat": r"\begin{pmatrix} a & b \\ c & d \end{pmatrix}",
         "| | Mat": r"\begin{vmatrix} a & b \\ c & d \end{vmatrix}",
         "‖ ‖ Mat": r"\begin{Vmatrix} a & b \\ c & d \end{Vmatrix}",
-        "Cases": r"\begin{cases} x & \text{if } x > 0 \\ 0 & \text{otherwise} \end{cases}",
-        "Aligned": r"\begin{aligned} y &= mx + b \\ &= 2x + 1 \end{aligned}"
+        "Cases": r"\begin{cases} x & x > 0 \\ 0 & \text{else} \end{cases}",
+        "Binom": r"\binom{n}{r}",
+        "…": r"\dots", "⋯": r"\cdots", "⋮": r"\vdots", "⋱": r"\ddots"
     },
-    "Arrows & Fonts": {
-        "→": r"\rightarrow", "←": r"\leftarrow", "↔": r"\leftrightarrow", "⇒": r"\Rightarrow", "⇔": r"\Leftrightarrow",
-        "↦": r"\mapsto", "↑": r"\uparrow", "↓": r"\downarrow",
-        "Bold Text": r"\mathbf{text}", "Italic": r"\mathit{text}", "Callig": r"\mathcal{A}", "Fraktur": r"\mathfrak{R}",
-        "Bold Math": r"\bm{x}", "Color Block": r"\textcolor{colorA}{text}",
-        "â": r"\hat{a}", "ã": r"\tilde{a}", "ā": r"\bar{a}", "a⃗": r"\vec{a}"
+    "Accents & Decor": {
+        "a'": r"a'", "a''": r"a''", "a°": r"a^{\circ}",
+        "ȧ": r"\dot{a}", "ä": r"\ddot{a}", 
+        "â": r"\hat{a}", "ǎ": r"\check{a}", 
+        "à": r"\grave{a}", "á": r"\acute{a}", 
+        "ã": r"\tilde{a}", "ă": r"\breve{a}", 
+        "ā": r"\bar{a}", "a⃗": r"\vec{a}",
+        "abc (wide ~)": r"\widetilde{abc}", "abc (wide ^)": r"\widehat{abc}",
+        "abc (over ¯)": r"\overline{abc}", "abc (under _)": r"\underline{abc}",
+        "abc (overbrace)": r"\overbrace{abc}^{x}", "abc (underbrace)": r"\underbrace{abc}_{x}",
+        "abc (over →)": r"\overrightarrow{abc}", "abc (over ←)": r"\overleftarrow{abc}"
     }
 }
 
